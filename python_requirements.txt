@@ -1,0 +1,6 @@
+P0f
+python-nmap
+elevate
+netifaces
+pyyaml
+lxml
