@@ -1,0 +1,4 @@
+[submodule "recog"]
+	path = recog
+	url = https://github.com/rapid7/recog
+	branch = master

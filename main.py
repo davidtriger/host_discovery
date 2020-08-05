@@ -20,12 +20,15 @@ def get_network_parameters():
     return addresses["addr"] + "/" + str(netmask_to_cidr(addresses["netmask"]))
 
 
-def main():
-    # Parse arguments
+def parse_args():
     parser = argparse.ArgumentParser(description="Simple utility to scan network and detect operating system and device fingerprints. If no arguments are passed, detects the subnet automatically")
     parser.add_argument("target_spec", type=str, nargs="?", help="Can pass hostnames, IP addresses, networks, etc. Ex: scanme.nmap.org, microsoft.com/24, 192.168.0.1; 10.0.0-255.1-254")
     args = parser.parse_args()
-    target_spec = args.target_spec
+    return args.target_spec
+
+
+def main():
+    target_spec = parse_args()
 
     # Require superuser for nmap OS scan
     elevate(graphical=False)
@@ -40,7 +43,12 @@ def main():
 
         print("Starting scan")
         #nm.scan(target_spec, arguments="-A -T4")
-        nm.scan(target_spec, arguments="-F")
+
+        try:
+            nm.scan(target_spec, arguments="-F")
+        except KeyboardInterrupt as e: 
+            print("nmap scan interrupted.")
+
         #nm.scan("192.168.1.1", arguments="-O -F -sS -sU")
         #nm.scan("192.168.1.1", arguments="-O --osscan-limit --max-os-tries 1")
         scanned_hosts = nm.all_hosts()
