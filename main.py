@@ -32,7 +32,7 @@ def parse_args():
 def main():
     target_spec = parse_args()
 
-    # Require superuser for nmap OS scan
+    # Require superuser for nmap OS scan and MAC resolution
     elevate(graphical=False)
 
     # Enable p0f passive scan while nmap is scanning
@@ -52,7 +52,7 @@ def main():
         except KeyboardInterrupt as e: 
             print("nmap scan interrupted.")
         """
-        nm.scan("192.168.1.1", arguments="-p 22 -sV --script=banner")
+        nm.scan("192.168.1.1", arguments="-p 22 -sV -O -T4 --script=banner")
 
         #nm.scan("192.168.1.1", arguments="-O -F -sS -sU")
         #nm.scan("192.168.1.1", arguments="-O --osscan-limit --max-os-tries 1")
@@ -75,8 +75,8 @@ def main():
 
         print(len(hosts), " hosts scanned with target spec: ", target_spec)
 
-        xml = XML(hosts)
-        print(xml.get_xml())
+        #xml = XML(hosts)
+        #print(xml.get_xml())
         
 
 if __name__ == "__main__":

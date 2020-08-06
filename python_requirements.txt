@@ -5,3 +5,5 @@ netifaces
 pyyaml
 lxml
 yattag
+requests
+get-mac
