@@ -18,7 +18,6 @@ class P0f_client():
 
         # ignore stdout, but keep stderr prints
         self.proc = Popen(["p0f", "-p", "-s", named_socket], stdout=DEVNULL)
-
         elapsed = 0.0
 
         # busy wait for p0f process to open a socket

@@ -3,11 +3,11 @@
 from Passive import P0f_client 
 from Host import Host
 from Report import XML
-import Recog
 from nmap import PortScanner
 from elevate import elevate
 import netifaces
 import argparse
+import os
 
 # Convert ip mask to a number of 1's in it's binary representation
 def netmask_to_cidr(netmask):
@@ -32,7 +32,7 @@ def parse_args():
 def main():
     target_spec = parse_args()
 
-    # Require superuser for nmap OS scan and MAC resolution
+    # Stealth scan, OS scan, and MAC resolution require superuser priveleges
     elevate(graphical=False)
 
     # Enable p0f passive scan while nmap is scanning
@@ -44,7 +44,6 @@ def main():
             print("Using automatic target_spec: ", target_spec)
 
         print("Starting scan")
-        #nm.scan(target_spec, arguments="-A -T4")
 
         """
         try:
@@ -52,27 +51,21 @@ def main():
         except KeyboardInterrupt as e: 
             print("nmap scan interrupted.")
         """
-        nm.scan("192.168.1.1", arguments="-p 22 -sV -O -T4 --script=banner")
+        nm.scan("192.168.1.1", arguments="-sS -sU -p 22 -sV -O -T4 --script=banner")
 
-        #nm.scan("192.168.1.1", arguments="-O -F -sS -sU")
-        #nm.scan("192.168.1.1", arguments="-O --osscan-limit --max-os-tries 1")
         hosts = dict()
 
         for host in nm.all_hosts():
-            hosts[host] = Host(host, nm, p0f_client)
-            print(host)
-            print(nm[host].hostnames())
-            
-            for key, value in nm[host].items():
-                print(key, " ", value)
-
-            for protocol in nm[host].all_protocols():
-                print(protocol)
-                lport = nm[host][protocol].keys()
-
-                for port in sorted(lport):
-                    print('port : %s\tstate : %s' % (port, nm[host][protocol][port]['state']))
-
+            try:
+                hosts[host] = Host(host, nm, p0f_client)
+                
+                for key, value in nm[host].items():
+                    print(key, " ", value)
+    
+            except Exception as e:
+                print("Error parsing host ", host, " ", e)
+                raise e
+    
         print(len(hosts), " hosts scanned with target spec: ", target_spec)
 
         #xml = XML(hosts)
