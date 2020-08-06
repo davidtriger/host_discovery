@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 from Passive import P0f_client 
+from Host import Host
+from Report import XML
 import Recog
 from nmap import PortScanner
 from elevate import elevate
@@ -44,16 +46,20 @@ def main():
         print("Starting scan")
         #nm.scan(target_spec, arguments="-A -T4")
 
+        """
         try:
             nm.scan(target_spec, arguments="-F")
         except KeyboardInterrupt as e: 
             print("nmap scan interrupted.")
+        """
+        nm.scan("192.168.1.1", arguments="-p 22 -sV --script=banner")
 
         #nm.scan("192.168.1.1", arguments="-O -F -sS -sU")
         #nm.scan("192.168.1.1", arguments="-O --osscan-limit --max-os-tries 1")
-        scanned_hosts = nm.all_hosts()
+        hosts = dict()
 
-        for host in scanned_hosts:
+        for host in nm.all_hosts():
+            hosts[host] = Host(host, nm, p0f_client)
             print(host)
             print(nm[host].hostnames())
             
@@ -67,10 +73,11 @@ def main():
                 for port in sorted(lport):
                     print('port : %s\tstate : %s' % (port, nm[host][protocol][port]['state']))
 
-            print("P0f:")
-            print(p0f_client.get_data(host))
+        print(len(hosts), " hosts scanned with target spec: ", target_spec)
 
-        print(len(scanned_hosts), " hosts scanned with filter: ", target_spec)
+        xml = XML(hosts)
+        print(xml.get_xml())
+        
 
 if __name__ == "__main__":
     main()

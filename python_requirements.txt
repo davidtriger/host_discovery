@@ -4,3 +4,4 @@ elevate
 netifaces
 pyyaml
 lxml
+yattag
