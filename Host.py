@@ -2,7 +2,6 @@ import requests
 import json
 import getmac
 import Recog
-import re
 
 
 class Host():
@@ -54,22 +53,54 @@ class Host():
                 self.tcp_services[port] = {k: v for k, v in self.nmap_data["tcp"][port].items() if v is not None and v != ""}
                 print(port, " ", self.tcp_services[port])
 
-                if "script" in self.tcp_services[port]:
-                    if port == 22:
-                        banner = self.tcp_services[port]["script"]["banner"]
-                        for word in re.split(r"\\x\w\w+|\n", banner):
-                            if len(word) > 2:
-                                match = Recog.match(word, "ssh_banners")
-                                """
-                                if match.startswith("FAIL:"):
-                                    for part_word in re.split(r"\W+", word):
-                                        if len(part_word) > 2 and not part_word.isdigit():
-                                            match = Recog.match(part_word, "ssh_banners")
-                                            print(match)
-                                else:
-                                    print(match)
-                                """
+                # Try to match banners grabbed 
+                if "script" in self.tcp_services[port] and "banner" in self.tcp_services[port]["script"]:
+                    match = None
 
+                    # FTP
+                    if port in [20, 21]:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "ftp_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    # SSH
+                    if port == 22:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "ssh_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    # Telnet
+                    if port == 23:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "telnet_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    # SMTP
+                    if port in [25, 465, 587, 2525]:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "smtp_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    # HTTP
+                    if port in [80, 443, 8080, 8888, 8000, 8008]:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "html_title", Recog.MatchLevel.SPLIT_HEX)
+
+                    # POP3
+                    if port in [110, 995]:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "pop_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    # NNTP
+                    if port == 119:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "nntp_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    # IMAP
+                    if port in [143, 993]:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "imap_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    # MySQL TCP
+                    if port == 3306: 
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "mysql_banners", Recog.MatchLevel.SPLIT_HEX)
+                        
+                    # SIP TCP
+                    if port in [5060, 5061]:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "sip_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    if match is not None:
+                        self.tcp_servies[port]["recog_match"] = match
+
+                                                        
         self.udp_services = dict()
         if "udp" in self.nmap_data.keys():
             print("udp")
@@ -77,6 +108,25 @@ class Host():
                 # Ignore empty fields
                 self.udp_services[port] = {k: v for k, v in self.nmap_data["udp"][port].items() if v is not None and v != ""}
                 print(port, " ", self.udp_services[port])
+
+                # Try to match banners grabbed 
+                if "script" in self.udp_services[port] and "banner" in self.udp_services[port]["script"]:
+                    match = None
+
+                    # NTP
+                    if port == 123:
+                        match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "ntp_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    # MySQL UDP 
+                    if port == 3306: 
+                        match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "mysql_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    #SIP UDP
+                    if port in [5060, 5061]:
+                        match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "sip_banners", Recog.MatchLevel.SPLIT_HEX)
+
+                    if match is not None:
+                        self.udp_servies[port]["recog_match"] = match
 
         print(self.p0f_data)
 
