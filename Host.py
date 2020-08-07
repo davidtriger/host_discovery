@@ -132,18 +132,22 @@ class Host():
                         self.udp_servies[port]["recog_match"] = match
 
     def get_report_data(self):
+        hostname = self.hostname.strip().replace(" ", "_")
+
         report = {
-                    "Host" : self.hostname,
-                    "IP" : self.ip_address,
-                    "State" : self.state,
-                    "MAC" : self.mac_address,
-                    "Vendor" : self.vendor,
-                    "Services" : { 
-                        "TCP" : self.tcp_services,
-                        "UDP" : self.udp_services
-                        },
-                    "Nmap data" : self.nmap_data,
-                    "P0f data" : self.p0f_data
+                    self.hostname : {
+                        "Host" : self.hostname,
+                        "IP" : self.ip_address,
+                        "State" : self.state,
+                        "MAC" : self.mac_address,
+                        "Vendor" : self.vendor,
+                        "Services" : { 
+                            "TCP" : self.tcp_services,
+                            "UDP" : self.udp_services
+                            },
+                        "Nmap data" : self.nmap_data,
+                        "P0f data" : self.p0f_data
+                    }
                 }
 
         return report
