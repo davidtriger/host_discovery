@@ -15,15 +15,19 @@ class Host():
 
         self.mac_address = None
 
+        # MAC address
         if "mac" in addresses.keys() and len(addresses["mac"]) > 0:
             self.mac_address = addresses["mac"]
 
+        # IP Address
         if "ipv4" in addresses.keys():
+            # IPv4
             self.ip_address = addresses["ipv4"]
 
             if self.mac_address is None:
                 self.mac_address = getmac.get_mac_address(ip=self.ip_address)
         elif "ipv6" in addresses.keys():
+            # IPv6
             self.ip_address = addresses["ipv6"]
 
             if self.mac_address is None:
@@ -34,9 +38,10 @@ class Host():
             if self.mac_address is None:
                 self.mac_address = getmac.get_mac_address(hostname=self.ip_address)
        
-        self.vendor = None
-        self.get_vendor()
+        # Vendor
+        self.vendor = self.get_vendor() 
 
+        # State 
         status = self.nmap_data["status"]
         self.state = status["state"]
         
@@ -47,11 +52,10 @@ class Host():
         # Process services
         self.tcp_services = dict()
         if "tcp" in self.nmap_data.keys():
-            print("tcp")
+            # TCP Services
             for port in sorted(self.nmap_data["tcp"].keys()):
                 # Ignore empty fields
-                self.tcp_services[port] = {k: v for k, v in self.nmap_data["tcp"][port].items() if v is not None and v != ""}
-                print(port, " ", self.tcp_services[port])
+                self.tcp_services[port] = { key: value for key, value in self.nmap_data["tcp"][port].items() if value is not None and value != "" }
 
                 # Try to match banners grabbed 
                 if "script" in self.tcp_services[port] and "banner" in self.tcp_services[port]["script"]:
@@ -74,7 +78,7 @@ class Host():
                         match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "smtp_banners", Recog.MatchLevel.SPLIT_HEX)
 
                     # HTTP
-                    if port in [80, 443, 8080, 8888, 8000, 8008]:
+                    if port in [80, 443, 8000, 8008, 8080, 8888]:
                         match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "html_title", Recog.MatchLevel.SPLIT_HEX)
 
                     # POP3
@@ -103,11 +107,10 @@ class Host():
                                                         
         self.udp_services = dict()
         if "udp" in self.nmap_data.keys():
-            print("udp")
+            # UDP Services
             for port in sorted(self.nmap_data["udp"].keys()):
                 # Ignore empty fields
-                self.udp_services[port] = {k: v for k, v in self.nmap_data["udp"][port].items() if v is not None and v != ""}
-                print(port, " ", self.udp_services[port])
+                self.udp_services[port] = { key: value for key, value in self.nmap_data["udp"][port].items() if value is not None and value != "" }
 
                 # Try to match banners grabbed 
                 if "script" in self.udp_services[port] and "banner" in self.udp_services[port]["script"]:
@@ -128,22 +131,37 @@ class Host():
                     if match is not None:
                         self.udp_servies[port]["recog_match"] = match
 
-        print(self.p0f_data)
+    def get_report_data(self):
+        report = {
+                    "Host" : self.hostname,
+                    "IP" : self.ip_address,
+                    "State" : self.state,
+                    "MAC" : self.mac_address,
+                    "Vendor" : self.vendor,
+                    "Services" : { 
+                        "TCP" : self.tcp_services,
+                        "UDP" : self.udp_services
+                        },
+                    "Nmap data" : self.nmap_data,
+                    "P0f data" : self.p0f_data
+                }
 
+        return report
         
-
     def get_vendor(self):
-        # macvendors.co is more reliable than nmap vendor
-        MACVENDOR_URL = "http://macvendors.co/api/" + self.mac_address
+        if self.mac_address is None:
+            return ""
 
         try:
-            response = requests.get(MACVENDOR_URL).json()
+            # macvendors.co is more reliable than nmap vendor
+            macvendor_url = "http://macvendors.co/api/" + self.mac_address
+            response = requests.get(macvendor_url).json()
             
             if "error" in response["result"].keys(): 
                 raise Exception("No vendor found")
             else:
-                self.vendor = response
+                return response
         except:
             # macvendors failed, use nmap vendor
-            self.vendor = self.nmap_data["vendor"]
-            
+            return self.nmap_data["vendor"]
+         
