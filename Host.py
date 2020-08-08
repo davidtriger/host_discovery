@@ -11,8 +11,8 @@ class Host():
         self.p0f_data = p0f_client.get_data(hostname)
 
         # Get fields as requested in assignment spec
+        self.hardware = dict() 
         addresses = self.nmap_data["addresses"]
-
         self.mac_address = None
 
         # MAC address
@@ -43,11 +43,12 @@ class Host():
         self.vendor = self.get_vendor() 
 
         # State 
-        status = self.nmap_data["status"]
-        self.state = status["state"]
-        
-        if "reason" in status.keys():
-            self.state += " (" + status["reason"] + ")"
+        if "status" in self.nmap_data.keys() and "state" in self.nmap_data["status"].keys():
+            status = self.nmap_data["status"]
+            self.state = status["state"]
+            
+            if "reason" in status.keys():
+                self.state += " (" + status["reason"] + ")"
 
         # Process services
         self.tcp_services = dict()
@@ -81,6 +82,10 @@ class Host():
                     if port in [80, 443, 8000, 8008, 8080, 8888]:
                         match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "html_title", default_match_level)
 
+                        # Try match server string if title did not yield results
+                        if match is None:
+                            match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "http_servers", default_match_level)
+
                     # POP3
                     if port in [110, 995]:
                         match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "pop_banners", default_match_level)
@@ -93,6 +98,10 @@ class Host():
                     if port in [143, 993]:
                         match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "imap_banners", default_match_level)
 
+                    # SMB
+                    if port in [139, 445]:
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "smb_native_os", default_match_level)
+
                     # MySQL TCP
                     if port == 3306: 
                         match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "mysql_banners", default_match_level)
@@ -103,6 +112,12 @@ class Host():
 
                     if match is not None:
                         self.tcp_services[port]["recog_match"] = match
+                        
+                        if "os.device" in match.keys():
+                            self.hardware["tcp_" + str(port)] = match["os.device"]
+                        elif "hw.device" in match.keys():
+                            self.hardware["tcp_" + str(port)] = match["hw.device"]
+
 
         self.udp_services = dict()
         if "udp" in self.nmap_data.keys():
@@ -130,6 +145,63 @@ class Host():
                     if match is not None:
                         self.udp_services[port]["recog_match"] = match
 
+                        if "os.device" in match.keys():
+                            self.hardware["udp_" + str(port)] = match["os.device"]
+                        elif "hw.device" in match.keys():
+                            self.hardware["udp_" + str(port)] = match["hw.device"]
+
+        self.operating_system = dict() 
+
+        # OS Detection
+        if "osmatch" in self.nmap_data.keys():
+            # Nmap
+            osmatch = self.nmap_data["osmatch"]
+            
+            if len(osmatch) > 0:
+                # Assume the first suggestion is correct
+                nmap_os = osmatch[0]["name"]
+                self.operating_system["Nmap match"] = nmap_os
+                match = Recog.match_nmap(nmap_os, "operating_system", Recog.MatchLevel.SPLIT_NON_ALPHABETIC)
+                
+                if match is not None:
+                    self.operating_system["Recog match"] = match
+                    
+                    if "os.device" in match.keys():
+                        self.hardware["OS match"] = match["os.device"]
+                    elif "hw.device" in match.keys():
+                        self.hardware["OS match"] = match["hw.device"]
+        
+        # Use P0f results to improve detection
+        if self.p0f_data is not None:
+            # P0f
+            # Detect OS
+            p0f_os = self.p0f_data["os_name"].replace(b"\x00", b"").decode("ascii") + " " + self.p0f_data["os_flavor"].replace(b"\x00", b"").decode("ascii")
+            
+            if len(p0f_os) > 1:
+                self.operating_system["P0f match"] = p0f_os
+            
+                if self.operating_system["Recog match"] is None:
+                    self.operating_system["Recog match"] = Recog.match_nmap(p0f_os, "operating_system", Recog.MatchLevel.SPLIT_NON_ALPHABETIC)
+
+            # Detect HTTP
+            p0f_http = self.p0f_data["http_name"].replace(b"\x00", b"").decode("ascii") + " " + self.p0f_data["http_flavor"].replace(b"\x00", b"").decode("ascii")
+
+            if len(p0f_http) > 1:
+                match = Recog.match_nmap(p0f_http, "html_title", default_match_level)
+
+                # Try match server string if title did not yield results
+                if match is None:
+                    match = Recog.match_nmap(p0f_http, "http_servers", default_match_level)
+
+                if match is not None:
+                    self.tcp_services["P0f HTTP"] = match
+
+                    if "os.device" in match.keys():
+                        self.hardware["P0f HTTP mmatch"] = match["os.device"]
+                    elif "hw.device" in match.keys():
+                        self.hardware["P0f HTTP match"] = match["hw.device"]
+
+
     def get_report_data(self):
         hostname = self.hostname.strip().replace(" ", "_")
 
@@ -140,6 +212,7 @@ class Host():
                         "State" : self.state,
                         "MAC" : self.mac_address,
                         "Vendor" : self.vendor,
+                        "Operating System" : self.operating_system,
                         "Services" : { 
                             "TCP" : self.tcp_services,
                             "UDP" : self.udp_services
@@ -166,5 +239,8 @@ class Host():
                 return response
         except:
             # macvendors failed, use nmap vendor
-            return self.nmap_data["vendor"]
+            if "vendor" in self.nmap_data.keys():
+                return self.nmap_data["vendor"]
+            else:
+                return "Unknown"
          
