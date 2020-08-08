@@ -5,7 +5,7 @@ import Recog
 
 
 class Host():
-    def __init__(self, hostname, nmap_data, p0f_client):
+    def __init__(self, hostname, nmap_data, p0f_client, default_match_level=Recog.MatchLevel.SPLIT_HEX):
         self.hostname = hostname
         self.nmap_data = nmap_data[hostname]
         self.p0f_data = p0f_client.get_data(hostname)
@@ -33,6 +33,7 @@ class Host():
             if self.mac_address is None:
                 self.mac_address = getmac.get_mac_address(ip6=self.ip_address)
         else:
+            # Use hostname
             self.ip_address = hostname 
 
             if self.mac_address is None:
@@ -48,7 +49,6 @@ class Host():
         if "reason" in status.keys():
             self.state += " (" + status["reason"] + ")"
 
-
         # Process services
         self.tcp_services = dict()
         if "tcp" in self.nmap_data.keys():
@@ -63,48 +63,47 @@ class Host():
 
                     # FTP
                     if port in [20, 21]:
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "ftp_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "ftp_banners", default_match_level)
 
                     # SSH
                     if port == 22:
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "ssh_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "ssh_banners", default_match_level)
 
                     # Telnet
                     if port == 23:
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "telnet_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "telnet_banners", default_match_level)
 
                     # SMTP
                     if port in [25, 465, 587, 2525]:
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "smtp_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "smtp_banners", default_match_level)
 
                     # HTTP
                     if port in [80, 443, 8000, 8008, 8080, 8888]:
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "html_title", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "html_title", default_match_level)
 
                     # POP3
                     if port in [110, 995]:
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "pop_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "pop_banners", default_match_level)
 
                     # NNTP
                     if port == 119:
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "nntp_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "nntp_banners", default_match_level)
 
                     # IMAP
                     if port in [143, 993]:
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "imap_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "imap_banners", default_match_level)
 
                     # MySQL TCP
                     if port == 3306: 
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "mysql_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "mysql_banners", default_match_level)
                         
                     # SIP TCP
                     if port in [5060, 5061]:
-                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "sip_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "sip_banners", default_match_level)
 
                     if match is not None:
-                        self.tcp_servies[port]["recog_match"] = match
+                        self.tcp_services[port]["recog_match"] = match
 
-                                                        
         self.udp_services = dict()
         if "udp" in self.nmap_data.keys():
             # UDP Services
@@ -118,18 +117,18 @@ class Host():
 
                     # NTP
                     if port == 123:
-                        match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "ntp_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "ntp_banners", default_match_level)
 
                     # MySQL UDP 
                     if port == 3306: 
-                        match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "mysql_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "mysql_banners", default_match_level)
 
                     #SIP UDP
                     if port in [5060, 5061]:
-                        match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "sip_banners", Recog.MatchLevel.SPLIT_HEX)
+                        match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "sip_banners", default_match_level)
 
                     if match is not None:
-                        self.udp_servies[port]["recog_match"] = match
+                        self.udp_services[port]["recog_match"] = match
 
     def get_report_data(self):
         hostname = self.hostname.strip().replace(" ", "_")
