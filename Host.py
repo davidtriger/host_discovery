@@ -226,11 +226,12 @@ class Host():
                         "State" : self.state,
                         "MAC" : self.mac_address,
                         "Vendor" : self.vendor,
+                        "Hardware" : self.hardware,
                         "Operating System" : self.operating_system,
                         "Services" : { 
                             "TCP" : self.tcp_services,
                             "UDP" : self.udp_services
-                            },
+                        },
                         "Nmap data" : self.nmap_data,
                         "P0f data" : self.p0f_data
                     }
