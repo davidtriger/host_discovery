@@ -56,7 +56,8 @@ def main():
         print("Starting scan")
 
         try:
-            nm.scan(target_spec, arguments="-sS -sU -p 443 -sV -O -T4 --script=banner,dns-service-discovery,ssl-cert,smb-os-discovery")
+            #nm.scan(target_spec, arguments="-sS -sU -p 443 -sV -O -T4 --script=banner,dns-service-discovery,ssl-cert,smb-os-discovery")
+            nm.scan(target_spec, arguments="-p 443 --script=ssl-cert")
         except KeyboardInterrupt as e: 
             print("nmap scan interrupted.")
 

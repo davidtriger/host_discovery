@@ -65,6 +65,14 @@ class Host():
 
                 # Try to match banners grabbed 
                 if "script" in self.tcp_services[port]:
+                    # HTTPS
+                    if port == 443:
+                        if "ssl-cert" in self.tcp_services[port]["script"]:
+                            match = Recog.match_nmap(self.tcp_services[port]["script"]["ssl-cert"], "x509_subjects", default_match_level)
+
+                            if match is None:
+                                match = Recog.match_nmap(self.tcp_services[port]["script"]["ssl-cert"], "x509_issuers", default_match_level)
+
                     if "banner" in self.tcp_services[port]["script"]:
                         # FTP
                         if port in [20, 21]:
@@ -83,13 +91,13 @@ class Host():
                             match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "smtp_banners", default_match_level)
 
                         # HTTP
-                        if port in [80, 443, 8000, 8008, 8080, 8888]:
+                        if port in [80, 8000, 8008, 8080, 8888]:
                             match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "html_title", default_match_level)
 
                             # Try match server string if title did not yield results
                             if match is None:
                                 match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "http_servers", default_match_level)
-
+                        
                         # POP3
                         if port in [110, 995]:
                             match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "pop_banners", default_match_level)
