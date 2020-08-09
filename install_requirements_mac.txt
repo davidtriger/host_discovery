@@ -1,7 +1,6 @@
-P0f
+p0f
 nmap
 ruby
 python3
-rumble
 tcpdump
 
