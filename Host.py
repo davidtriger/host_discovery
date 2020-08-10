@@ -237,12 +237,12 @@ class Host():
         find_pattern(
             self.nmap_data, 
             [
-                "Printer", "Phone", "Fax", "Firewall", "Bridge", "Router", "Switch", "Gateway", "Hub",\
-                "Modem", "Macbook", "Ipad", "Alexa", "VPN", "Laptop", "MBP", "Scanner", "Server", "IPS",\
-                "IDS", "KVM", "Media", "TV", "Tablet", "Android", "iOS", "VoIP", "Camera", "Cam", "PC",\
-                "Computer", "Car", "Speaker", "Headphone", "Streamer", "Huawei", "Xiaomi", "Mi", "Galaxy",\
+                "Printer", "Phone", "Fax", "Firewall", "Bridge", "Router", "Switch", "Gateway", "Hub",
+                "Modem", "Macbook", "Ipad", "Alexa", "VPN", "Laptop", "MBP", "Scanner", "Server", "IPS",
+                "IDS", "KVM", "Media", "TV", "Tablet", "Android", "iOS", "VoIP", "Camera", "Cam", "PC",
+                "Computer", "Car", "Speaker", "Headphone", "Streamer", "Huawei", "Xiaomi", "Mi", "Galaxy",
                 "Vivo", "Samsung", "Watch", "Apple", "Nokia", "Motorola", "LG", "Playstation", "Sony",
-                "Xbox", "Amazon", "HTC"
+                "Xbox", "Amazon", "HTC", "VMware", "Virtual"
             ]
         )
 
