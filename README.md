@@ -10,6 +10,7 @@ cat install_requirements_ubuntu.txt | xargs sudo apt-get install -y
 
 ## Mac
 ```
+xcode-select --install
 cat install_requirements_mac.txt | xargs brew install 
 ./instal.sh
 ```

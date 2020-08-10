@@ -16,24 +16,27 @@ class P0f_client():
         except OSError:
             pass
 
-        # ignore stdout, but keep stderr prints
-        if interface is None:
-            self.proc = Popen(["p0f", "-p", "-s", named_socket], stdout=DEVNULL)
-        else:
-            self.proc = Popen(["p0f", "-p", "-s", named_socket, "-i", interface], stdout=DEVNULL)
-        elapsed = 0.0
+        try:
+            # ignore stdout, but keep stderr prints
+            if interface is None:
+                self.proc = Popen(["p0f", "-p", "-s", named_socket], stdout=DEVNULL)
+            else:
+                self.proc = Popen(["p0f", "-p", "-s", named_socket, "-i", interface], stdout=DEVNULL)
+            elapsed = 0.0
 
-        # busy wait for p0f process to open a socket
-        while not os.path.exists(named_socket):
-            sleep(0.1)
-            elapsed += 0.1
+            # busy wait for p0f process to open a socket
+            while not os.path.exists(named_socket):
+                sleep(0.1)
+                elapsed += 0.1
 
-            if elapsed >= 1.0:
-                # If took more than a second to open the socket, terminate
-                self.cleanup()
-                raise Exception("Error creating socket - Timeout exceeded")
+                if elapsed >= 1.0:
+                    # If took more than a second to open the socket, terminate
+                    self.cleanup()
+                    raise Exception("Error creating socket - Timeout exceeded")
 
-        self.instance = P0f(str(named_socket))
+            self.instance = P0f(str(named_socket))
+        except Exception as e:
+            print("P0f failed to run. using nmap only. ", e)
 
     def cleanup(self):
         # Terminate the passive scan process
