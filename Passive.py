@@ -10,6 +10,7 @@ class P0f_client():
     def __init__(self, named_socket, interface):
         self.named_socket = named_socket 
         self.instance = None
+        self.proc = None
 
         try:
             # Remove socket if exists
@@ -41,15 +42,19 @@ class P0f_client():
             print("P0f failed to run. using nmap only. ", e)
 
     def cleanup(self):
-        # Terminate the passive scan process
-        self.proc.terminate()
-       
-        # Remove socket if exists
         try:
-            os.remove(self.named_socket)         
-        except OSError:
-            # Ignore file doesn't exist, also ignore other OSErrors
-            pass
+            # Terminate the passive scan process
+            if self.proc != None:
+                self.proc.terminate()
+       
+            # Remove socket if exists
+            try:
+                os.remove(self.named_socket)         
+            except OSError:
+                # Ignore file doesn't exist, also ignore other OSErrors
+                pass
+        except Exception as e:
+            print("Error cleanup of P0f: ", e)
 
     def __enter__(self):
         return self

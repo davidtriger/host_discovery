@@ -4,15 +4,17 @@ Simple utility to scan network and detect operating system and device fingerprin
 # Installation 
 ## Ubuntu
 ```
+cd host_discovery
 cat install_requirements_ubuntu.txt | xargs sudo apt-get install -y 
 ./install.sh
 ```
 
 ## Mac
 ```
+cd host_discovery
 xcode-select --install
 cat install_requirements_mac.txt | xargs brew install 
-./instal.sh
+./install.sh
 ```
 
 # Usage Examples
