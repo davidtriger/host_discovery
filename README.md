@@ -2,19 +2,19 @@
 Simple utility to scan network and detect operating system and device fingerprints
 
 __________________________________________________________________________________________
->>> Installation <<<
+# Installation 
 __________________________________________________________________________________________
-Ubuntu installation:
+>Ubuntu installation:
 cat install_requirements_ubuntu.txt | xargs sudo apt-get install -y 
 ./install.sh
 
 __________________________________________________________________________________________
-Mac installation:
+>Mac installation:
 cat install_requirements_mac.txt | xargs brew install 
 ./instal.sh
 
 __________________________________________________________________________________________
->>> Usage Examples <<<
+# Usage Examples
 __________________________________________________________________________________________
 Auto-detect subnet and scan default nmap ports:
 python3 main.py
@@ -42,7 +42,7 @@ Note that some map arguments are set by default:
 Additional nmap flags may be set by --args:
 python3 main.py --args="-Pn"
 __________________________________________________________________________________________
->>> Usage and Parameters <<< 
+# Usage and Parameters
 __________________________________________________________________________________________
 usage: main.py [-h] [-i INTERFACE] [-a ARGS] [-sU] [-p PORTS | -t TOP_PORTS] [target_spec]
 
