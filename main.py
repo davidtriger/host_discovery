@@ -7,6 +7,7 @@ from nmap import PortScanner
 from elevate import elevate
 import netifaces
 import argparse
+from argparse import RawTextHelpFormatter
 import os
 
 
@@ -26,27 +27,30 @@ def get_network_parameters():
 def parse_args():
     parser = argparse.ArgumentParser(description=\
             "Simple utility to scan network and detect operating system and device"\
-            "fingerprints. If no arguments are passed, detects the subnet automatically,"\
-            "and uses default nmap ports."
+            "fingerprints.\n If no arguments are passed, detects the subnet automatically,"\
+            "and uses default nmap ports.",
+            formatter_class=RawTextHelpFormatter
             )
     parser.add_argument("target_spec", type=str, nargs="?", help=\
-            "Can pass hostnames, IP addresses, networks, etc."\
+            "Can pass hostnames, IP addresses, networks, etc.\n"\
             "Ex: scanme.nmap.org, microsoft.com/24, 192.168.0.1; 10.0.0-255.1-254"
             )
     parser.add_argument("-i", "--interface", type=str, help=\
             "Specify interface to run tool on. If omitted, runs on default interface."
             )
-    parser.add_argument("-Pn", action="store_true", help=\
-            "Treat all hosts as online -- skip host discovery."
+    parser.add_argument("-a", "--args", type=str, help=\
+            "Additional arguments for nmap. See nmap -h."
             )
 
     parser.add_argument("-sU", action="store_true", help=\
-            "Scan UDP. Makes execution slow, low amount of ports recommended."
+            "Scan UDP. Makes execution slow, low amount of ports recommended.\n"\
+            "Consider using with:\n"\
+            "\t--args \"--min-parallelism 10 --max-retries 2\""
             )
 
     ports_group = parser.add_mutually_exclusive_group()
     ports_group.add_argument("-p", "--ports", type=str, help=\
-            "Only scan specified ports. Mutually exclusive with --top_ports."\
+            "Only scan specified ports. Mutually exclusive with --top_ports.\n"\
             "Ex: -p 22; -p 1-65535; -p U:53,111,137,T:21-25,80,139,8080,S:9"
             )
     ports_group.add_argument("-t", "--top_ports", type=str, help=\
@@ -55,14 +59,14 @@ def parse_args():
     
     args = parser.parse_args()
     
-    return args.target_spec, args.interface, args.ports, args.top_ports, args.Pn, args.sU
+    return args.target_spec, args.interface, args.ports, args.top_ports, args.sU, args.args
 
 
 def main():
     # Stealth scan, OS scan, and MAC resolution require superuser priveleges
     elevate(graphical=False, show_console=False)
 
-    target_spec, interface, ports, top_ports, Pn, sU= parse_args()
+    target_spec, interface, ports, top_ports, sU, args= parse_args()
 
     STEALTH_SCAN = "-sS"
     SCAN_SERVICES = "-sV --version-intensity 2"
@@ -76,13 +80,11 @@ def main():
 
     if interface is not None:
         nmap_arguments.append("-e " + interface)
-
-    if Pn:
-        nmap_arguments.append("-Pn")
-
-    if sU:
+    
+    if sU or args is not None and "-sU" in args:
         nmap_arguments.append("-sU")
-        print("Warning: UDP scan enabled. Large amount of ports may make scan slow.")
+        print("Warning: UDP scan enabled, which may slow scan. See help for more info.")
+        print("Large amount of UDP ports to scan may drastically impede performance.")
 
     if ports is not None:
         nmap_arguments.append("-p " + ports)
@@ -92,6 +94,9 @@ def main():
     else:
         if top_ports is not None:
             nmap_arguments.append("--top-ports " + top_ports)
+
+    if args is not None:
+        nmap_arguments.append(args)
 
     # Enable p0f passive scan while nmap is scanning
     with P0f_client("p0f.socket", interface) as p0f_client:

@@ -233,6 +233,19 @@ class Host():
         except Exception as e:
             print("Error processing p0f results for ", host, ", omitting. ", e)
 
+        self.hardware["String match guess"] = \
+        find_pattern(
+            self.nmap_data, 
+            [
+                "Printer", "Phone", "Fax", "Firewall", "Bridge", "Router", "Switch", "Gateway", "Hub",\
+                "Modem", "Macbook", "Ipad", "Alexa", "VPN", "Laptop", "MBP", "Scanner", "Server", "IPS",\
+                "IDS", "KVM", "Media", "TV", "Tablet", "Android", "iOS", "VoIP", "Camera", "Cam", "PC",\
+                "Computer", "Car", "Speaker", "Headphone", "Streamer", "Huawei", "Xiaomi", "Mi", "Galaxy",\
+                "Vivo", "Samsung", "Watch", "Apple", "Nokia", "Motorola", "LG", "Playstation", "Sony",
+                "Xbox", "Amazon", "HTC"
+            ]
+        )
+
 
     def get_report_data(self):
         hostname = self.hostname.strip().replace(" ", "_")
@@ -278,3 +291,30 @@ class Host():
             else:
                 return "Unknown"
          
+
+
+def find_pattern(obj, pattern_list):
+    try:
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                pattern = find_pattern(value, pattern_list) 
+
+                if pattern != "Unidentified":
+                    return pattern
+        elif isinstance(obj, list):
+            for element in obj:
+                pattern = find_pattern(element, pattern_list) 
+
+                if pattern != "Unidentified":
+                    return pattern
+        else:
+            for pattern in pattern_list:
+                if pattern.lower() in str(obj).lower():
+                    return pattern + " - " + str(obj)
+
+    except Exception as e:
+        # Ignore errors as this is only for enrichment
+        pass
+
+    return "Unidentified"
+    
