@@ -68,10 +68,10 @@ class Host():
                     # HTTPS
                     if port == 443:
                         if "ssl-cert" in self.tcp_services[port]["script"]:
-                            match = Recog.match_nmap(self.tcp_services[port]["script"]["ssl-cert"], "x509_subjects", default_match_level)
+                            match = Recog.match_nmap(self.tcp_services[port]["script"]["ssl-cert"], "x509_subjects", Recog.MatchLevel.SPLIT_NON_ALPHABETIC)
 
                             if match is None:
-                                match = Recog.match_nmap(self.tcp_services[port]["script"]["ssl-cert"], "x509_issuers", default_match_level)
+                                match = Recog.match_nmap(self.tcp_services[port]["script"]["ssl-cert"], "x509_issuers", Recog.MatchLevel.SPLIT_NON_ALPHABETIC)
 
                     if "banner" in self.tcp_services[port]["script"]:
                         # FTP
@@ -110,8 +110,8 @@ class Host():
                         if port in [143, 993]:
                             match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "imap_banners", default_match_level)
 
-                        # SMB
-                        if port in [139, 445]:
+                        # SMB TCP
+                        if port in [137, 138, 139, 445]:
                             match = Recog.match_nmap(self.tcp_services[port]["script"]["banner"], "smb_native_os", default_match_level)
 
                         # MySQL TCP
@@ -125,7 +125,11 @@ class Host():
                     if "dns_service_discovery" in self.tcp_services[port]["script"]:
                         # MDNS TCP 
                         if port == 5353: 
-                            match = Recog.match_nmap(self.tcp_services[port]["script"]["dns_service_discovery"], "mdns_device-info_txt", default_match_level)
+                            match = Recog.match_nmap(
+                                    self.tcp_services[port]["script"]["dns_service_discovery"],
+                                    "mdns_device-info_txt",
+                                    Recog.MatchLevel.SPLIT_NON_ALPHABETIC
+                                    )
 
                 if match is not None:
                     self.tcp_services[port]["recog_match"] = match
@@ -149,6 +153,10 @@ class Host():
                         # NTP
                         if port == 123:
                             match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "ntp_banners", default_match_level)
+
+                        # SMB UDP 
+                        if port in [137, 138, 139, 445]:
+                            match = Recog.match_nmap(self.udp_services[port]["script"]["banner"], "smb_native_os", default_match_level)
 
                         # MySQL UDP 
                         if port == 3306: 
@@ -193,34 +201,50 @@ class Host():
                         self.hardware["OS match"] = match["hw.device"]
         
         # Use P0f results to improve detection
-        if self.p0f_data is not None:
-            # P0f
-            # Detect OS
-            p0f_os = self.p0f_data["os_name"].replace(b"\x00", b"").decode("ascii") + " " + self.p0f_data["os_flavor"].replace(b"\x00", b"").decode("ascii")
-            
-            if len(p0f_os) > 1:
-                self.operating_system["P0f match"] = p0f_os
-            
-                if "Recog match" not in self.operating_system or self.operating_system["Recog match"] is None:
-                    self.operating_system["Recog match"] = Recog.match_nmap(p0f_os, "operating_system", Recog.MatchLevel.SPLIT_NON_ALPHABETIC)
+        try:
+            if self.p0f_data is not None:
+                # P0f
+                # Detect OS
+                p0f_os = self.p0f_data["os_name"].replace(b"\x00", b"").decode("ascii") + " " + self.p0f_data["os_flavor"].replace(b"\x00", b"").decode("ascii")
+                
+                if len(p0f_os) > 1:
+                    self.operating_system["P0f match"] = p0f_os
+                
+                    if "Recog match" not in self.operating_system or self.operating_system["Recog match"] is None:
+                        self.operating_system["Recog match"] = Recog.match_nmap(p0f_os, "operating_system", Recog.MatchLevel.SPLIT_NON_ALPHABETIC)
 
-            # Detect HTTP
-            p0f_http = self.p0f_data["http_name"].replace(b"\x00", b"").decode("ascii") + " " + self.p0f_data["http_flavor"].replace(b"\x00", b"").decode("ascii")
+                # Detect HTTP
+                p0f_http = self.p0f_data["http_name"].replace(b"\x00", b"").decode("ascii") + " " + self.p0f_data["http_flavor"].replace(b"\x00", b"").decode("ascii")
 
-            if len(p0f_http) > 1:
-                match = Recog.match_nmap(p0f_http, "html_title", default_match_level)
+                if len(p0f_http) > 1:
+                    match = Recog.match_nmap(p0f_http, "html_title", default_match_level)
 
-                # Try match server string if title did not yield results
-                if match is None:
-                    match = Recog.match_nmap(p0f_http, "http_servers", default_match_level)
+                    # Try match server string if title did not yield results
+                    if match is None:
+                        match = Recog.match_nmap(p0f_http, "http_servers", default_match_level)
 
-                if match is not None:
-                    self.tcp_services["P0f HTTP"] = match
+                    if match is not None:
+                        self.tcp_services["P0f HTTP"] = match
 
-                    if "os.device" in match:
-                        self.hardware["P0f HTTP mmatch"] = match["os.device"]
-                    elif "hw.device" in match:
-                        self.hardware["P0f HTTP match"] = match["hw.device"]
+                        if "os.device" in match:
+                            self.hardware["P0f HTTP mmatch"] = match["os.device"]
+                        elif "hw.device" in match:
+                            self.hardware["P0f HTTP match"] = match["hw.device"]
+        except Exception as e:
+            print("Error processing p0f results for ", host, ", omitting. ", e)
+
+        self.hardware["String match guess"] = \
+        find_pattern(
+            self.nmap_data, 
+            [
+                "Printer", "Phone", "Fax", "Firewall", "Bridge", "Router", "Switch", "Gateway", "Hub",\
+                "Modem", "Macbook", "Ipad", "Alexa", "VPN", "Laptop", "MBP", "Scanner", "Server", "IPS",\
+                "IDS", "KVM", "Media", "TV", "Tablet", "Android", "iOS", "VoIP", "Camera", "Cam", "PC",\
+                "Computer", "Car", "Speaker", "Headphone", "Streamer", "Huawei", "Xiaomi", "Mi", "Galaxy",\
+                "Vivo", "Samsung", "Watch", "Apple", "Nokia", "Motorola", "LG", "Playstation", "Sony",
+                "Xbox", "Amazon", "HTC"
+            ]
+        )
 
 
     def get_report_data(self):
@@ -267,3 +291,30 @@ class Host():
             else:
                 return "Unknown"
          
+
+
+def find_pattern(obj, pattern_list):
+    try:
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                pattern = find_pattern(value, pattern_list) 
+
+                if pattern != "Unidentified":
+                    return pattern
+        elif isinstance(obj, list):
+            for element in obj:
+                pattern = find_pattern(element, pattern_list) 
+
+                if pattern != "Unidentified":
+                    return pattern
+        else:
+            for pattern in pattern_list:
+                if pattern.lower() in str(obj).lower():
+                    return pattern + " - " + str(obj)
+
+    except Exception as e:
+        # Ignore errors as this is only for enrichment
+        pass
+
+    return "Unidentified"
+    
