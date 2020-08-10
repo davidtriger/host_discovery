@@ -133,7 +133,8 @@ class Host():
 
                 if match is not None:
                     self.tcp_services[port]["recog_match"] = match
-                    
+
+                    # Detect hardware
                     if "os.device" in match:
                         self.hardware["tcp_" + str(port)] = match["os.device"]
                     elif "hw.device" in match:
@@ -174,6 +175,7 @@ class Host():
                 if match is not None:
                     self.udp_services[port]["recog_match"] = match
 
+                    # Detect hardware
                     if "os.device" in match:
                         self.hardware["udp_" + str(port)] = match["os.device"]
                     elif "hw.device" in match:
@@ -195,6 +197,7 @@ class Host():
                 if match is not None:
                     self.operating_system["Recog match"] = match
                     
+                    # Detect hardware
                     if "os.device" in match:
                         self.hardware["OS match"] = match["os.device"]
                     elif "hw.device" in match:
@@ -226,6 +229,7 @@ class Host():
                     if match is not None:
                         self.tcp_services["P0f HTTP"] = match
 
+                        # Detect hardware
                         if "os.device" in match:
                             self.hardware["P0f HTTP mmatch"] = match["os.device"]
                         elif "hw.device" in match:
@@ -242,7 +246,7 @@ class Host():
                 "IDS", "KVM", "Media", "TV", "Tablet", "Android", "iOS", "VoIP", "Camera", "Cam", "PC",
                 "Computer", "Car", "Speaker", "Headphone", "Streamer", "Huawei", "Xiaomi", "Mi", "Galaxy",
                 "Vivo", "Samsung", "Watch", "Apple", "Nokia", "Motorola", "LG", "Playstation", "Sony",
-                "Xbox", "Amazon", "HTC", "VMware", "Virtual"
+                "Xbox", "Amazon", "HTC", "VMware", "Virtual", "HP", "Cisco", "Checkpoint", "Netgear"
             ]
         )
 
@@ -292,7 +296,7 @@ class Host():
                 return "Unknown"
          
 
-
+# Find a pattern from a list of given pattern in an object
 def find_pattern(obj, pattern_list):
     try:
         if isinstance(obj, dict):

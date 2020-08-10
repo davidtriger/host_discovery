@@ -17,6 +17,12 @@ cat install_requirements_mac.txt | xargs brew install
 ./install.sh
 ```
 
+# Known issues
+P0f interface changes between versions. This may require updating the command line in Passive.py.
+The tool will run even with P0f unavailable.
+Ruby gem installation isn't perfect. This code can't solve ruby installation issues, but Google can.
+
+
 # Usage Examples
 Auto-detect subnet and scan default nmap ports:
 ```
