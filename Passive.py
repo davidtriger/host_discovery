@@ -60,7 +60,7 @@ class P0f_client():
     def get_data(self, ip):
         data = None
 
-        if instance is not None:
+        if self.instance is not None:
             try:
                 data = self.instance.get_info(ip)
             except P0fException as e:
