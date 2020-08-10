@@ -19,7 +19,7 @@ class P0f_client():
             pass
 
         try:
-            # ignore stdout, but keep stderr prints
+            # Ignore stdout, but keep stderr prints
             if interface is None:
                 self.proc = Popen(["p0f", "-p", "-s", named_socket], stdout=DEVNULL)
             else:
@@ -27,7 +27,7 @@ class P0f_client():
 
             elapsed = 0.0
 
-            # busy wait for p0f process to open a socket
+            # Busy wait for p0f process to open a socket
             while not os.path.exists(named_socket):
                 sleep(0.1)
                 elapsed += 0.1
