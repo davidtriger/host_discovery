@@ -7,7 +7,7 @@ import os
 
 # Wrapper for P0f subprocess
 class P0f_client():
-    def __init__(self, named_socket):
+    def __init__(self, named_socket, interface):
         self.named_socket = named_socket 
 
         try:
@@ -17,7 +17,10 @@ class P0f_client():
             pass
 
         # ignore stdout, but keep stderr prints
-        self.proc = Popen(["p0f", "-p", "-s", named_socket], stdout=DEVNULL, stderr=DEVNULL)
+        if interface is None:
+            self.proc = Popen(["p0f", "-p", "-s", named_socket], stdout=DEVNULL)
+        else:
+            self.proc = Popen(["p0f", "-p", "-s", named_socket, "-i", interface], stdout=DEVNULL)
         elapsed = 0.0
 
         # busy wait for p0f process to open a socket
