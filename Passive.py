@@ -9,6 +9,7 @@ import os
 class P0f_client():
     def __init__(self, named_socket, interface):
         self.named_socket = named_socket 
+        self.instance = None
 
         try:
             # Remove socket if exists
@@ -22,6 +23,7 @@ class P0f_client():
                 self.proc = Popen(["p0f", "-p", "-s", named_socket], stdout=DEVNULL)
             else:
                 self.proc = Popen(["p0f", "-p", "-s", named_socket, "-i", interface], stdout=DEVNULL)
+
             elapsed = 0.0
 
             # busy wait for p0f process to open a socket
@@ -58,16 +60,20 @@ class P0f_client():
     def get_data(self, ip):
         data = None
 
-        try:
-            data = self.instance.get_info(ip)
-        except P0fException as e:
-            # Invalid query was sent to p0f. Maybe the API has changed.
-            print(e)
-        except KeyError as e:
-            # No data is available for this IP address.
-            print(e)
-        except ValueError as e:
-            # p0f returned invalid constant values. Maybe the API has changed.
-            print(e)
+        if instance is not None:
+            try:
+                data = self.instance.get_info(ip)
+            except P0fException as e:
+                # Invalid query was sent to p0f. Maybe the API has changed.
+                print(e)
+            except KeyError as e:
+                # No data is available for this IP address.
+                print(e)
+            except ValueError as e:
+                # p0f returned invalid constant values. Maybe the API has changed.
+                print(e)
+            except Exception as e:
+                # General exception
+                print(e)
 
         return data
