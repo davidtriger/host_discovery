@@ -40,6 +40,10 @@ def parse_args():
             "Treat all hosts as online -- skip host discovery."
             )
 
+    parser.add_argument("-sU", action="store_true", help=\
+            "Scan UDP. Makes execution slow, low amount of ports recommended."
+            )
+
     ports_group = parser.add_mutually_exclusive_group()
     ports_group.add_argument("-p", "--ports", type=str, help=\
             "Only scan specified ports. Mutually exclusive with --top_ports."\
@@ -51,30 +55,34 @@ def parse_args():
     
     args = parser.parse_args()
     
-    return args.target_spec, args.interface, args.ports, args.top_ports, args.Pn
+    return args.target_spec, args.interface, args.ports, args.top_ports, args.Pn, args.sU
 
 
 def main():
     # Stealth scan, OS scan, and MAC resolution require superuser priveleges
     elevate(graphical=False, show_console=False)
 
-    target_spec, interface, ports, top_ports, Pn = parse_args()
+    target_spec, interface, ports, top_ports, Pn, sU= parse_args()
 
     STEALTH_SCAN = "-sS"
-    SCAN_UDP = "-sU"
-    SCAN_SERVICES = "-sV"
-    SCAN_OS = "-O"
+    SCAN_SERVICES = "-sV --version-intensity 2"
+    SCAN_OS = "-A"
     TIMING_TEMPLATE = "-T4"
     SCRIPTS = ["banner" , "dns-service-discovery", "ssl-cert"]
     SCRIPT_ARG = "--script=" + ",".join(SCRIPTS)
+    MAX_OS_TRIES = "--max-os-tries 2"
 
-    nmap_arguments = [STEALTH_SCAN, SCAN_UDP, SCAN_SERVICES, SCAN_OS, TIMING_TEMPLATE, SCRIPT_ARG]
+    nmap_arguments = [STEALTH_SCAN, SCAN_SERVICES, SCAN_OS, TIMING_TEMPLATE, SCRIPT_ARG, MAX_OS_TRIES]
 
     if interface is not None:
         nmap_arguments.append("-e " + interface)
 
     if Pn:
         nmap_arguments.append("-Pn")
+
+    if sU:
+        nmap_arguments.append("-sU")
+        print("Warning: UDP scan enabled. Large amount of ports may make scan slow.")
 
     if ports is not None:
         nmap_arguments.append("-p " + ports)
